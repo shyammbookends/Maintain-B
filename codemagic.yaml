@@ -1,0 +1,74 @@
+# Cloud builds for the Flutter app (mobile-app/) on Codemagic — iOS needs a Mac,
+# and Codemagic provides one. Connect this repository at https://codemagic.io.
+#
+#  - ios-check:   compiles the iPhone app without signing (no Apple account needed)
+#                 to prove the iOS build works.
+#  - ios-release: signed .ipa for TestFlight / iPhones. Needs an Apple Developer
+#                 account (₹ 8,700/yr) and, in Codemagic → Team → Integrations,
+#                 an App Store Connect API key named "bookends_asc".
+#  - android-apk: the same APK as the local build (arm64).
+
+workflows:
+  ios-check:
+    name: iOS build check (unsigned)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    working_directory: mobile-app
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Analyze and test
+        script: |
+          flutter analyze
+          flutter test
+      - name: Build iOS (no code signing)
+        script: flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
+
+  ios-release:
+    name: iOS release (TestFlight)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    working_directory: mobile-app
+    integrations:
+      app_store_connect: bookends_asc
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: in.bookends.bookendsMaintenance
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build .ipa
+        script: flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  android-apk:
+    name: Android APK
+    max_build_duration: 60
+    instance_type: linux_x2
+    working_directory: mobile-app
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Build APK (arm64)
+        script: flutter build apk --release --split-per-abi --target-platform android-arm64
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk

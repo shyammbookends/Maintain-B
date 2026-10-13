@@ -1,0 +1,1284 @@
+/*
+ * mobile.css — phone & small-tablet layout: the same design as the Flutter
+ * app (mobile-app/lib/core/theme.dart and widgets/common.dart).
+ *
+ * Everything in this file is inside a max-width media query, so changing it
+ * never affects the desktop site (≥ 1024px). Components expose `data-m="…"`
+ * hooks (no visual effect on their own) and phone-only markup is rendered only
+ * when usePhone() is true (same breakpoint); this file decides how they look.
+ *
+ *   < 1024px  phones and tablets: Flutter palette, white app bar with the page
+ *             title and bell, bottom navigation bar, floating action buttons,
+ *             lists as cards, forms as full-screen pages, safe-area insets.
+ *
+ * Imported after index.css in main.tsx, so these rules win over the Tailwind
+ * utilities they replace.
+ */
+
+/* The tab bar only exists on small screens. */
+.m-tabbar {
+  display: none;
+}
+
+@keyframes m-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes m-sheet-up {
+  from {
+    transform: translateY(32px);
+    opacity: 0.4;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  /* ===================================================================== */
+  /* Flutter palette (AppColors) and shape                                  */
+  /* ===================================================================== */
+  :root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --canvas: #f3f5fb;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --secondary: #eef2ff;
+    --secondary-foreground: #4338ca;
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --input: #e2e8f0;
+    --ring: #4f46e5;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-foreground: #ffffff;
+    --destructive: #e11d48;
+    --destructive-hover: #be123c;
+    --destructive-foreground: #ffffff;
+    --neutral: #94a3b8;
+    --neutral-soft: #f1f5f9;
+    --neutral-fg: #64748b;
+    --info: #4f46e5;
+    --info-soft: #eef2ff;
+    --info-fg: #4338ca;
+    --warning: #f59e0b;
+    --warning-soft: #fffbeb;
+    --warning-fg: #b45309;
+    --success: #10b981;
+    --success-soft: #ecfdf5;
+    --success-fg: #047857;
+    --danger: #e11d48;
+    --danger-soft: #fff1f2;
+    --danger-fg: #be123c;
+    --review: #7c3aed;
+    --review-soft: #f5f3ff;
+    --review-fg: #6d28d9;
+    --sidebar: #ffffff;
+    --brand-from: #4338ca;
+    --brand-to: #7c3aed;
+    --radius: 12px;
+    --shadow-card: 0 6px 18px rgb(49 46 129 / 0.06);
+    --shadow-card-hover: 0 6px 18px rgb(49 46 129 / 0.06);
+
+    /* Layout */
+    --m-safe-top: env(safe-area-inset-top, 0px);
+    --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --m-safe-left: env(safe-area-inset-left, 0px);
+    --m-safe-right: env(safe-area-inset-right, 0px);
+    --m-appbar-h: 56px;
+    --m-tabbar-h: 68px;
+    /* Height of the bottom bar actually shown (0 on screens without one). */
+    --m-nav: calc(var(--m-tabbar-h) + var(--m-safe-bottom));
+    --m-border-soft: #edf0f6;
+    --m-card-shadow: 0 6px 18px rgb(49 46 129 / 0.06);
+    --m-fab-gap: 16px;
+  }
+  /* Worker focus screens (task in progress) hide the tab bar. */
+  :root:not(:has(.m-tabbar, [data-m='w-nav'])) {
+    --m-nav: var(--m-safe-bottom);
+  }
+
+  /* No white rubber-band gaps behind the app on iOS; no grey tap flash. */
+  html,
+  body {
+    background: var(--canvas);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    overscroll-behavior-y: none;
+  }
+  a,
+  button,
+  [role='button'],
+  [role='link'],
+  [role='tab'],
+  label,
+  select,
+  summary {
+    touch-action: manipulation;
+  }
+  .bg-app {
+    background: var(--canvas);
+  }
+
+  .m-brand {
+    background-image: linear-gradient(135deg, #4338ca, #7c3aed);
+  }
+  .m-hero {
+    background-image: linear-gradient(135deg, #3730a3 0%, #6d28d9 60%, #be185d 100%);
+    box-shadow: 0 12px 28px rgb(124 58 237 / 0.35);
+  }
+  .bg-brand {
+    background-image: linear-gradient(135deg, #4338ca, #7c3aed);
+  }
+  /* Admin dashboard banner: Bookends blue with bubbles rising through it. */
+  .m-hero.m-hero--blue {
+    background-image:
+      radial-gradient(120% 120% at 100% 0%, rgb(96 165 250 / 0.45) 0%, transparent 55%),
+      linear-gradient(135deg, #172554 0%, #1e40af 45%, #2563eb 100%);
+    box-shadow: 0 12px 28px rgb(29 78 216 / 0.38);
+  }
+  .m-bubble {
+    position: absolute;
+    bottom: -32px;
+    border-radius: 9999px;
+    border: 1px solid rgb(255 255 255 / 0.3);
+    background: radial-gradient(
+      circle at 32% 30%,
+      rgb(255 255 255 / 0.6) 0%,
+      rgb(255 255 255 / 0.14) 55%,
+      rgb(255 255 255 / 0.04) 100%
+    );
+    opacity: 0;
+    pointer-events: none;
+    animation: m-bubble-rise var(--dur, 10s) ease-in infinite;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes m-bubble-rise {
+    0% {
+      transform: translate(0, 0) scale(0.7);
+      opacity: 0;
+    }
+    12% {
+      opacity: 0.9;
+    }
+    50% {
+      transform: translate(10px, -140px) scale(1);
+    }
+    90% {
+      opacity: 0.5;
+    }
+    100% {
+      transform: translate(-8px, -300px) scale(1.12);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .m-bubble {
+      animation: none;
+      opacity: 0.45;
+      bottom: 18%;
+    }
+  }
+
+  /* Pressed feedback on cards (Flutter InkWell). */
+  .m-press {
+    transition: background-color 120ms;
+  }
+  .m-press:active {
+    background-color: rgb(79 70 229 / 0.05);
+  }
+  .m-card.m-press:active {
+    background-color: #f7f7fe;
+  }
+  .m-press:focus-visible,
+  .m-card:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Notification count (Flutter Badge). */
+  .m-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #e11d48;
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ===================================================================== */
+  /* App bar (Flutter AppBar: white, 56px, 20px bold title, bell)            */
+  /* ===================================================================== */
+  [data-m='header'],
+  [data-m='w-header'] {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    height: calc(var(--m-appbar-h) + var(--m-safe-top));
+    min-height: calc(var(--m-appbar-h) + var(--m-safe-top));
+    padding: var(--m-safe-top) calc(8px + var(--m-safe-right)) 0 calc(16px + var(--m-safe-left));
+    gap: 4px;
+    background: #ffffff;
+    backdrop-filter: none;
+    border-bottom: 0;
+    box-shadow: 0 1px 0 #e2e8f0;
+  }
+  [data-m='w-header']:has(> a:first-child) {
+    padding-left: calc(4px + var(--m-safe-left));
+  }
+  .m-appbar-title,
+  [data-m='w-header'] > h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+    color: #0f172a;
+  }
+  [data-m='w-header'] > a:first-child {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+  }
+  [data-m='w-header'] [data-slot='button'] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .m-icon-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #0f172a;
+  }
+  .m-icon-btn:active {
+    background: rgb(15 23 42 / 0.06);
+  }
+  .m-icon-btn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -4px;
+  }
+
+  /* ===================================================================== */
+  /* Bottom navigation (Flutter NavigationBar)                              */
+  /* ===================================================================== */
+  .m-tabbar,
+  [data-m='w-nav'] {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    height: calc(var(--m-tabbar-h) + var(--m-safe-bottom));
+    padding: 0 var(--m-safe-right) var(--m-safe-bottom) var(--m-safe-left);
+    background: #ffffff;
+    backdrop-filter: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow:
+      0 -1px 0 #e2e8f0,
+      0 -6px 16px rgb(15 23 42 / 0.05);
+  }
+  .m-tabbar {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+  [data-m='w-nav'] > ul {
+    max-width: none;
+    height: var(--m-tabbar-h);
+  }
+  .m-tab,
+  [data-m='w-nav'] a {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    height: var(--m-tabbar-h);
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    transition: none;
+  }
+  .m-tab.active,
+  [data-m='w-nav'] a[aria-current='page'] {
+    color: #4f46e5;
+    font-weight: 600;
+  }
+  .m-tab:focus-visible,
+  [data-m='w-nav'] a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -6px;
+    border-radius: 12px;
+  }
+  /* Icon inside a 64×32 stadium indicator. */
+  .m-tab-icon {
+    box-sizing: content-box;
+    width: 23px;
+    height: 23px;
+    padding: 4.5px 20.5px;
+    border-radius: 16px;
+    stroke-width: 1.75;
+  }
+  .m-tab.active .m-tab-icon {
+    background: rgb(79 70 229 / 0.12);
+    stroke-width: 2.25;
+  }
+  [data-m='w-nav'] a > span.relative {
+    width: 64px;
+    height: 32px;
+    border-radius: 16px;
+    background: transparent;
+  }
+  [data-m='w-nav'] a[aria-current='page'] > span.relative {
+    background: rgb(79 70 229 / 0.12);
+  }
+  [data-m='w-nav'] a > span.relative > svg {
+    width: 23px;
+    height: 23px;
+    transform: none;
+  }
+  /* The old top line is replaced by the indicator. */
+  [data-m='w-nav'] a > span.absolute {
+    display: none;
+  }
+  .m-tab-label,
+  [data-m='w-nav'] a > span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0 2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .m-tab-badge,
+  [data-m='w-nav'] a > span.relative > span {
+    position: absolute;
+    top: 9px;
+    left: calc(50% + 3px);
+    right: auto;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #e11d48;
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+  }
+  [data-m='w-nav'] a > span.relative > span {
+    top: -2px;
+    left: 34px;
+  }
+
+  /* ===================================================================== */
+  /* Floating action buttons                                                */
+  /* ===================================================================== */
+  /* The page's main action floats above the tab bar (Flutter extended FAB). */
+  [data-m='page-actions'] > :nth-child(1 of [data-slot='button'][data-variant='default']) {
+    position: fixed;
+    right: calc(var(--m-fab-gap) + var(--m-safe-right));
+    bottom: calc(var(--m-nav) + var(--m-fab-gap));
+    z-index: 35;
+    height: 56px;
+    min-height: 56px;
+    max-width: calc(100vw - 2 * var(--m-fab-gap) - 72px);
+    padding: 0 20px 0 16px;
+    gap: 10px;
+    border: 0;
+    border-radius: 999px;
+    background: #4f46e5;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow:
+      0 6px 16px rgb(79 70 229 / 0.35),
+      0 2px 4px rgb(15 23 42 / 0.12);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  [data-m='page-actions'] > :nth-child(1 of [data-slot='button'][data-variant='default']) svg {
+    width: 24px;
+    height: 24px;
+  }
+  /* Flutter ChatFab: white circle, indigo icon and outline. */
+  .m-chat-fab {
+    position: fixed;
+    right: calc(var(--m-fab-gap) + var(--m-safe-right));
+    bottom: calc(var(--m-nav) + var(--m-fab-gap));
+    z-index: 35;
+    display: flex;
+    width: 56px;
+    height: 56px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    background: #fff;
+    color: #4f46e5;
+    box-shadow:
+      0 6px 16px rgb(15 23 42 / 0.14),
+      0 2px 4px rgb(15 23 42 / 0.08);
+  }
+  .m-chat-fab:active {
+    background: #f5f6ff;
+  }
+  /* With a page action, chat sits above it (Flutter `_Fabs`). */
+  :root:has([data-m='page-actions'] > [data-slot='button'][data-variant='default']) .m-chat-fab {
+    bottom: calc(var(--m-nav) + var(--m-fab-gap) + 56px + 14px);
+  }
+
+  /*
+   * While typing, the on-screen keyboard takes the bottom of the screen: the
+   * tab bar and floating buttons step aside instead of riding on top of it
+   * (Android resizes the viewport; iOS can float fixed bars over the field).
+   */
+  :root:has(
+      :is(
+        input:not([type='checkbox']):not([type='radio']):not([type='button']):not(
+            [type='submit']
+          ):not([type='file']):not([type='range']),
+        textarea,
+        [contenteditable='true']
+      ):focus
+    )
+    :is(.m-tabbar, [data-m='w-nav'], .m-chat-fab) {
+    display: none;
+  }
+  :root:has(
+      :is(
+        input:not([type='checkbox']):not([type='radio']):not([type='button']):not(
+            [type='submit']
+          ):not([type='file']):not([type='range']),
+        textarea,
+        [contenteditable='true']
+      ):focus
+    )
+    [data-m='page-actions']
+    > :nth-child(1 of [data-slot='button'][data-variant='default']) {
+    display: none;
+  }
+
+  /* ===================================================================== */
+  /* Admin shell                                                            */
+  /* ===================================================================== */
+  [data-m='main'] {
+    max-width: none;
+    padding: 16px calc(16px + var(--m-safe-right)) calc(var(--m-nav) + 160px)
+      calc(16px + var(--m-safe-left));
+  }
+  /* Page entrance: fade only (a transform would trap the fixed FAB). */
+  [data-m='main'] > .animate-rise {
+    animation-name: m-fade;
+  }
+  /*
+   * Grid columns may shrink below their content, so wide children (charts,
+   * long codes) fit the screen instead of widening the page.
+   */
+  [data-m='main'] .grid > *,
+  [data-m='main'] figure,
+  #main-content .grid > * {
+    min-width: 0;
+  }
+  [data-m='main'] figure svg {
+    max-width: 100%;
+  }
+
+  /* Menu tab: full screen between the top and the tab bar (Flutter AdminMenuScreen). */
+  .m-menu-screen {
+    position: fixed;
+    inset: 0 0 var(--m-nav) 0;
+    z-index: 38;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--canvas);
+    animation: m-fade 140ms ease-out;
+  }
+  .m-menu-bar {
+    display: flex;
+    align-items: center;
+  }
+  .m-group-label {
+    padding: 18px 4px 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .m-scope [data-slot='select-trigger'] {
+    width: 100%;
+    max-width: none;
+    height: 48px;
+    border: 0;
+    box-shadow: none;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .m-signout {
+    display: flex;
+    width: 100%;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1.2px solid #c7d2fe;
+    border-radius: 12px;
+    background: #fff;
+    color: #be123c;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .m-signout:active {
+    background: #fff1f2;
+  }
+
+  /* ---- Page header: the title moved into the app bar ------------------ */
+  [data-m='page-header'] {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 10px;
+    padding-bottom: 12px;
+  }
+  [data-m='page-header'] > div:first-child {
+    min-width: 0;
+  }
+  [data-m='main'] [data-m='page-header']:not([data-m-back]) h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  [data-m='main'] [data-m='page-header'] > div:first-child > p {
+    display: none;
+  }
+  /* Back is the app bar arrow. */
+  [data-m='main'] [data-m='page-header'] > div:first-child > a:first-child {
+    display: none;
+  }
+  /* Detail pages keep a large title under the app bar. */
+  [data-m='page-header'][data-m-back] h1,
+  :not([data-m='main']) [data-m='page-header'] h1 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+    overflow-wrap: anywhere;
+  }
+  [data-m='main'] [data-m='page-header']:not([data-m-back]) > div:first-child:not(:has(> div)) {
+    display: none;
+  }
+  /* Secondary actions: one row you can swipe instead of a wrapping pile. */
+  [data-m='page-actions'] {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    margin-inline: -16px;
+    padding: 2px 16px;
+    scrollbar-width: none;
+  }
+  [data-m='page-actions']::-webkit-scrollbar {
+    display: none;
+  }
+  [data-m='page-actions'] > * {
+    flex-shrink: 0;
+  }
+  [data-m='page-actions']:not(:has(> :not([data-variant='default']))) {
+    display: contents;
+  }
+  [data-m='page-actions'] > [data-slot='button']:not([data-variant='default']),
+  [data-m='page-actions'] > * > [data-slot='button'] {
+    height: 44px;
+    min-height: 44px;
+    border-radius: 999px;
+    padding-inline: 14px;
+    font-size: 13.5px;
+  }
+
+  /* ===================================================================== */
+  /* Controls (Flutter buttons, inputs, chips)                              */
+  /* ===================================================================== */
+  [data-slot='button'] {
+    min-height: 44px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: background-color 120ms;
+  }
+  [data-slot='button']:active:not(:disabled) {
+    transform: none;
+  }
+  [data-slot='button'][data-variant='default'] {
+    background: #4f46e5;
+    box-shadow: none;
+  }
+  [data-slot='button'][data-variant='default']:active:not(:disabled) {
+    background: #4338ca;
+  }
+  [data-slot='button'][data-variant='secondary'] {
+    border: 1.2px solid #c7d2fe;
+    background: #fff;
+    color: #4f46e5;
+  }
+  [data-slot='button'][data-variant='destructive-outline'] {
+    border: 1.2px solid #fecdd3;
+    color: #be123c;
+  }
+  [data-slot='button'][data-variant='link'] {
+    min-height: 0;
+  }
+  [data-slot='button']:is(.size-9, .size-8) {
+    width: 44px;
+    height: 44px;
+  }
+  /* Form buttons like Flutter's 52px FilledButton. */
+  form [data-slot='button']:is([data-variant='default'], [data-variant='secondary']),
+  [data-slot='sheet-content']
+    [data-slot='button']:is([data-variant='default'], [data-variant='secondary']) {
+    min-height: 52px;
+    font-size: 15px;
+  }
+
+  /* iOS zooms into fields smaller than 16px: inputs are 16px on phones. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  [data-slot='input'],
+  input[data-slot='form-control']:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  [data-slot='select-trigger'],
+  button[data-slot='form-control'][role='combobox'] {
+    min-height: 48px;
+    border-radius: 12px;
+    border-color: #e2e8f0;
+    background-color: #fff;
+  }
+  [data-slot='select-trigger'],
+  button[data-slot='form-control'][role='combobox'] {
+    font-size: 15px;
+  }
+  [data-slot='textarea'],
+  textarea[data-slot='form-control'] {
+    border-radius: 12px;
+    border-color: #e2e8f0;
+  }
+  [data-slot='input']:focus-visible,
+  input[data-slot='form-control']:focus-visible,
+  textarea[data-slot='form-control']:focus-visible,
+  button[data-slot='form-control'][role='combobox']:focus-visible,
+  select:focus-visible,
+  [data-slot='textarea']:focus-visible,
+  [data-slot='select-trigger']:focus-visible {
+    border-color: #4f46e5;
+    outline: 0;
+    box-shadow: inset 0 0 0 0.8px #4f46e5;
+  }
+  /* Icon buttons inside fields (show password, clear search). */
+  [data-slot='form-item'] .relative > button:not([data-slot='button']),
+  [data-m='table-filters'] .relative > button {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-slot='select-item'] {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  input[type='checkbox'],
+  [role='checkbox'],
+  [role='switch'] {
+    min-width: 20px;
+  }
+
+  /* Status / priority (Flutter Pill): rounded, no dot. */
+  [data-slot='badge'] {
+    height: auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  [data-slot='badge'] > span[aria-hidden]:first-child:empty {
+    display: none;
+  }
+
+  /* View switch ("All / Open / Overdue…") as Flutter ChoiceChips. */
+  [data-slot='view-switch'] {
+    gap: 8px;
+    margin-inline: -16px;
+    padding: 2px 16px 10px;
+    border-bottom: 0;
+    scrollbar-width: none;
+  }
+  [data-slot='view-switch']::-webkit-scrollbar {
+    display: none;
+  }
+  [data-slot='view-switch'] > button {
+    flex-shrink: 0;
+    height: 40px;
+    margin: 0;
+    padding: 0 14px;
+    gap: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  [data-slot='view-switch'] > button[aria-pressed='true'] {
+    border-color: transparent;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 600;
+  }
+  [data-slot='view-switch'] > button[aria-pressed='true']::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    margin-left: -4px;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
+  /*
+   * Chips are 40px like Flutter's (visual), but an invisible margin makes the
+   * touch target at least 48px tall, as Material's padded tap target does.
+   */
+  :is(
+    [data-slot='view-switch'] > button,
+    [data-m='table-filters'] [data-slot='select-trigger'],
+    #main-content [role='group'] > button,
+    #main-content [role='group'] > [data-slot='select-trigger']
+  ) {
+    position: relative;
+  }
+  :is(
+    [data-slot='view-switch'] > button,
+    [data-m='table-filters'] [data-slot='select-trigger'],
+    #main-content [role='group'] > button,
+    #main-content [role='group'] > [data-slot='select-trigger']
+  )::after {
+    content: '';
+    position: absolute;
+    inset: -4px -2px;
+  }
+  #main-content [role='group'] > :is(button, [data-slot='select-trigger']) {
+    height: 40px;
+    min-height: 40px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+  [data-slot='view-switch'] {
+    padding-block: 6px 12px;
+  }
+  [data-m='table-filters'] {
+    padding-block: 4px;
+  }
+
+  /* Tabs (Flutter TabBar: indigo underline, 15px labels). */
+  [data-slot='tabs-list'] {
+    gap: 4px;
+    border-bottom-color: #e2e8f0;
+    scrollbar-width: none;
+  }
+  [data-slot='tabs-list']::-webkit-scrollbar {
+    display: none;
+  }
+  [data-slot='tabs-trigger'] {
+    min-height: 46px;
+    padding-inline: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #64748b;
+  }
+  [data-slot='tabs-trigger'][data-state='active'] {
+    color: #4f46e5;
+    font-weight: 600;
+    border-color: #4f46e5;
+  }
+
+  /* ===================================================================== */
+  /* Cards and panels (Flutter AppCard)                                     */
+  /* ===================================================================== */
+  [data-slot='panel'] {
+    min-width: 0;
+    border-color: var(--m-border-soft);
+    border-radius: 18px;
+    box-shadow: var(--m-card-shadow);
+  }
+  [data-slot='panel-header'] {
+    min-height: 52px;
+    padding-inline: 14px;
+    border-bottom-color: var(--m-border-soft);
+    background: transparent;
+  }
+  [data-slot='panel-header'] h2 {
+    font-size: 15.5px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+  [data-slot='panel-body'] {
+    padding: 14px;
+  }
+  [data-slot='panel-header'] > a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+  [data-slot='panel-footer'] {
+    padding-inline: 14px;
+  }
+  /* Wide inner tables (ledgers, counts) scroll sideways inside their panel. */
+  [data-slot='panel'] table {
+    min-width: 100%;
+  }
+  [data-slot='panel'] [data-slot='table-container'] {
+    overflow-x: auto;
+  }
+
+  /* Skeletons: soft pulse only. */
+  [data-slot='skeleton'] {
+    background: #e9edf5;
+  }
+
+  /* ===================================================================== */
+  /* Lists: search, chips, and rows as cards                                */
+  /* ===================================================================== */
+  [data-m='table'] {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  [data-m='table-toolbar'] {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0 -16px 10px;
+    padding: 0 16px;
+    border: 0;
+    background: transparent;
+  }
+  [data-m='table-filters'] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    margin-inline: -16px;
+    padding: 0 16px 2px;
+    scrollbar-width: none;
+  }
+  [data-m='table-filters']::-webkit-scrollbar {
+    display: none;
+  }
+  [data-m='table-filters'] > * {
+    flex: 0 0 auto;
+  }
+  /*
+   * The search box takes the first row (and stays put); the filter chips form
+   * one row below it that you can swipe sideways (Flutter: TextField + chips).
+   */
+  [data-m='table-toolbar'] {
+    position: relative;
+  }
+  [data-m='table-filters']:has(> :first-child input) {
+    padding-top: 58px;
+  }
+  [data-m='table-filters']:has(> :first-child input) > :first-child {
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+  }
+  [data-m='table-filters'] input[type='search'],
+  [data-m='table-filters'] [data-slot='input'] {
+    height: 48px;
+    border-radius: 12px;
+    background: #fff;
+  }
+  /* Filter selects and toggles as chips. */
+  [data-m='table-filters'] [data-slot='select-trigger'],
+  [data-m='table-toolbar'] > div:last-child [data-slot='button'] {
+    height: 40px;
+    min-height: 40px;
+    min-width: 0;
+    padding-inline: 12px;
+    border-radius: 999px;
+    border-color: #e2e8f0;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  [data-m='table-toolbar'] > div:last-child {
+    display: none;
+  }
+
+  [data-m='table'] [data-slot='table-container'] {
+    overflow: visible;
+  }
+  [data-m='table'] [data-slot='table'],
+  [data-m='table'] [data-slot='table-body'],
+  [data-m='table'] [data-slot='table-row'],
+  [data-m='table'] [data-slot='table-cell'] {
+    display: block;
+    width: 100%;
+  }
+  [data-m='table'] [data-slot='table-header'] {
+    display: none;
+  }
+  [data-m='table'] [data-slot='table-body'] {
+    display: grid;
+    gap: 10px;
+  }
+  [data-m='table'] [data-slot='table-body'] > [data-slot='table-row'] {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding: 14px;
+    border: 1px solid var(--m-border-soft);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: var(--m-card-shadow);
+  }
+  [data-m='table'] [data-slot='table-row']:hover {
+    background: #fff;
+  }
+  [data-m='table'] [data-slot='table-row'][data-clickable] {
+    cursor: pointer;
+  }
+  [data-m='table'] [data-slot='table-row'][data-clickable]:active {
+    background: #f7f7fe;
+  }
+  [data-m='table'] [data-slot='table-cell'] {
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    text-align: left;
+  }
+  /* Card title: the first column, across the full width. */
+  [data-m='table'] [data-slot='table-cell'][data-m-title] {
+    grid-column: 1 / -1;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  [data-m='table'] [data-slot='table-cell'][data-m-title] * {
+    max-width: 100%;
+    white-space: normal;
+  }
+  [data-m='table'] [data-slot='table-cell'][data-m-title] > * {
+    width: auto;
+    min-width: 0;
+  }
+  [data-m='table'] [data-slot='table-cell'][data-m-title] p + p,
+  [data-m='table'] [data-slot='table-cell'][data-m-title] span + span {
+    font-size: 12.5px;
+    font-weight: 400;
+    color: #64748b;
+  }
+  /* Status badge in the top-right corner, like the Flutter cards. */
+  [data-m='table'] [data-slot='table-row']:has(> [data-col='status']) > [data-m-title] {
+    padding-right: 104px;
+  }
+  [data-m='table'] [data-slot='table-row'] > [data-slot='table-cell'][data-col='status'] {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: auto;
+    max-width: 100px;
+  }
+  /* Other columns: small label above the value. */
+  [data-m='table'] [data-slot='table-cell'][data-label]:not([data-m-title])::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #64748b;
+  }
+  [data-m='table']
+    [data-slot='table-cell'][data-label]:not([data-m-title]):is(
+      [data-col='status'],
+      [data-col='priority']
+    )::before {
+    display: none;
+  }
+  [data-m='table'] [data-slot='table-cell']:not([data-m-title]) {
+    font-size: 13.5px;
+  }
+  /* Cells without a label (actions, checkboxes, empty / error states) span the card. */
+  [data-m='table'] [data-slot='table-cell']:not([data-label]) {
+    grid-column: 1 / -1;
+  }
+  [data-m='table'] [data-slot='table-cell']:not([data-label]):not(:has(*)) {
+    display: none;
+  }
+  /* Columns hidden on narrow desktop tables still fit in a card. */
+  [data-m='table'] [data-slot='table-cell'][data-hide-below] {
+    display: block;
+  }
+  [data-m='table'] [data-slot='table-cell'] .truncate {
+    overflow-wrap: anywhere;
+  }
+  /* Empty / error / loading rows are not cards. */
+  [data-m='table'] [data-slot='table-row']:has(> [colspan]) {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  [data-m='table'] [data-slot='table-row']:has(> [colspan]) > [colspan] {
+    border-radius: 18px;
+    background: #fff;
+    border: 1px solid var(--m-border-soft);
+  }
+  [data-m='table'] [data-testid='skeleton-row'] {
+    min-height: 92px;
+  }
+  /* Pagination under the cards. */
+  [data-m='table'] > :last-child:not([data-m='cards']):not(:has(table)) {
+    margin-top: 12px;
+    border: 0;
+    padding-inline: 0;
+    background: transparent;
+  }
+
+  /* ===================================================================== */
+  /* Dialogs and sheets                                                     */
+  /* ===================================================================== */
+  [data-slot='dialog-overlay'],
+  [data-slot='alert-dialog-overlay'] {
+    background: rgb(15 23 42 / 0.45);
+  }
+  /* Small dialogs and pickers: Flutter bottom sheet (24px top corners, handle). */
+  [data-slot='dialog-content'] {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    translate: none;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--m-safe-top) - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    border-radius: 24px 24px 0 0;
+    padding: 30px calc(20px + var(--m-safe-right)) calc(20px + var(--m-safe-bottom))
+      calc(20px + var(--m-safe-left));
+    box-shadow: 0 -12px 40px rgb(15 23 42 / 0.18);
+  }
+  [data-slot='dialog-content'][data-state='open'] {
+    animation: m-sheet-up 260ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  [data-slot='dialog-content']::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 32px;
+    height: 4px;
+    margin-left: -16px;
+    border-radius: 2px;
+    background: #cbd5e1;
+  }
+  [data-slot='dialog-content'] > button.absolute:last-child {
+    top: 10px;
+    right: calc(10px + var(--m-safe-right));
+    display: flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+  }
+  [data-slot='dialog-content'] h2,
+  [data-slot='sheet-content'] h2 {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  [data-slot='sheet-content'] h2 {
+    font-size: 20px;
+    letter-spacing: -0.3px;
+  }
+  /* Confirmations: Flutter AlertDialog (centred, 20px corners). */
+  [data-slot='alert-dialog-content'] {
+    width: calc(100% - 48px);
+    max-width: 400px;
+    border: 0;
+    border-radius: 20px;
+    padding: 24px;
+  }
+  [data-slot='alert-dialog-content'] h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Side sheets (forms) are full-screen pages with an app bar. */
+  [data-slot='sheet-content'][data-side='right'],
+  [data-slot='sheet-content'][data-side='left'] {
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    padding-top: var(--m-safe-top);
+    padding-bottom: var(--m-safe-bottom);
+    padding-left: var(--m-safe-left);
+    padding-right: var(--m-safe-right);
+  }
+  [data-slot='sheet-content'] > div:first-child:has(h2) {
+    min-height: 56px;
+    justify-content: center;
+    padding: 8px 64px 8px 16px;
+    border-bottom: 0;
+    box-shadow: 0 1px 0 #e2e8f0;
+  }
+  [data-slot='sheet-content'] > button.absolute:last-child {
+    top: calc(6px + var(--m-safe-top));
+    right: calc(6px + var(--m-safe-right));
+    display: flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #0f172a;
+  }
+  [data-slot='sheet-content'] > button.absolute:last-child svg {
+    width: 22px;
+    height: 22px;
+  }
+  [data-slot='sheet-content'][data-side='bottom'] {
+    max-height: calc(100dvh - var(--m-safe-top) - 24px);
+    border-radius: 24px 24px 0 0;
+    padding-bottom: calc(16px + var(--m-safe-bottom));
+  }
+  [data-slot='popover-content'],
+  [data-slot='dropdown-menu-content'],
+  [data-slot='select-content'] {
+    max-width: calc(100vw - 16px);
+    border-radius: 14px;
+  }
+
+  /* ===================================================================== */
+  /* Worker shell                                                           */
+  /* ===================================================================== */
+  body:has([data-m='w-nav']) #main-content,
+  body:has([data-m='w-header']) #main-content {
+    max-width: none;
+    border: 0;
+    background: var(--canvas);
+    padding-bottom: calc(var(--m-nav) + 96px);
+  }
+  /* Home has no app bar: keep clear of the notch / status bar. */
+  .m-home {
+    padding-top: calc(16px + var(--m-safe-top));
+  }
+  /* Worker cards: Flutter TaskCard look for the old markup. */
+  [data-m='task-card'] {
+    border-color: var(--m-border-soft);
+    border-radius: 18px;
+    box-shadow: var(--m-card-shadow);
+  }
+
+  /* ===================================================================== */
+  /* Sign-in (Flutter login screen)                                         */
+  /* ===================================================================== */
+  [data-m='auth-hero'] {
+    padding: calc(28px + var(--m-safe-top)) calc(24px + var(--m-safe-right)) 64px
+      calc(24px + var(--m-safe-left));
+  }
+  [data-m='auth-card'] {
+    border: 0;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgb(15 23 42 / 0.08);
+  }
+  [data-m='auth-card'] h1 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+}
+
+/* Motion is decoration: respect the phone setting to reduce motion. */
+@media (max-width: 1023.98px) and (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ===================================================================== */
+/* Chat (pages/chat): an open chat is a full screen of its own, like the  */
+/* Flutter ChatRoomScreen — app bar with a back arrow, messages, and the  */
+/* composer above the bottom safe area. It covers the tab bar.            */
+/* ===================================================================== */
+@media (max-width: 1023.98px) {
+  .m-chat-room {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    background: var(--canvas);
+    animation: m-fade 160ms ease-out;
+  }
+  .m-chat-bar {
+    min-height: calc(var(--m-appbar-h) + var(--m-safe-top));
+    padding: var(--m-safe-top) calc(4px + var(--m-safe-right)) 0 calc(4px + var(--m-safe-left));
+    gap: 8px;
+    background: #ffffff;
+    border-bottom: 0;
+    box-shadow: 0 1px 0 #e2e8f0;
+  }
+  .m-chat-composer {
+    padding: 8px calc(8px + var(--m-safe-right)) calc(8px + var(--m-safe-bottom))
+      calc(12px + var(--m-safe-left));
+    background: #ffffff;
+  }
+  /* Group members: a bottom sheet whose brand header runs edge to edge. */
+  [data-slot='dialog-content'][data-m='chat-members'] {
+    padding: 0 0 var(--m-safe-bottom);
+  }
+  [data-slot='dialog-content'][data-m='chat-members']::before {
+    background: rgb(255 255 255 / 0.6);
+  }
+  [data-slot='dialog-content'][data-m='chat-members'] > div:first-child {
+    padding-top: 26px;
+  }
+}

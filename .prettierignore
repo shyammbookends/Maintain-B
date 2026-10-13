@@ -1,6 +1,0 @@
-node_modules
-dist
-coverage
-package-lock.json
-apps/server/prisma/migrations
-apps/mobile

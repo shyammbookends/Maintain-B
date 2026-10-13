@@ -1,0 +1,48 @@
+name: Background jobs
+
+# Vercel Hobby only allows a daily cron, so GitHub Actions calls the job
+# endpoint every 15 minutes instead (PM work orders, alerts, scheduled email
+# reports, cleanup). The server runs each job at its own pace and never twice
+# at once, so extra or overlapping calls are harmless.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   APP_URL      https://your-app.vercel.app   (no trailing slash)
+#   CRON_SECRET  the same value as CRON_SECRET in the Vercel project
+# See web-app/docs/DEPLOYMENT.md.
+
+on:
+  schedule:
+    # GitHub may start scheduled runs a few minutes late; that's fine.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: background-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call /api/v1/jobs/run
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::warning::Set the APP_URL and CRON_SECRET repository secrets to run background jobs."
+            exit 0
+          fi
+          status=$(curl --silent --show-error --output response.json --write-out '%{http_code}' \
+            --max-time 120 --retry 2 --retry-delay 10 --retry-all-errors \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "${APP_URL%/}/api/v1/jobs/run")
+          echo "HTTP $status"
+          cat response.json; echo
+          if [ "$status" != "200" ]; then
+            echo "::error::Job endpoint returned HTTP $status"
+            exit 1
+          fi

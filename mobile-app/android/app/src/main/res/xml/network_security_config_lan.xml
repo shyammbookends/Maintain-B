@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug builds and LAN test builds (ALLOW_LAN_HTTP=true): the office PC's API at
+  http://<private IP>:4000. Android can't limit cleartext to IP ranges here, so
+  the app enforces "http only to private / local addresses" itself
+  (lib/core/transport_policy.dart); everything else must be HTTPS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
