@@ -10,7 +10,7 @@
   "functions": {
     "api/index.mjs": {
       "maxDuration": 60,
-      "includeFiles": "{apps/server/dist/**,packages/shared/dist/**,node_modules/.prisma/client/**,node_modules/pdfkit/js/standard-fonts/**}"
+      "includeFiles": "{apps/server/package.json,apps/server/dist/**,packages/shared/package.json,packages/shared/dist/**,node_modules/.prisma/client/**,node_modules/pdfkit/js/standard-fonts/**}"
     }
   },
   "rewrites": [
