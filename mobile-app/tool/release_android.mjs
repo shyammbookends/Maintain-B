@@ -84,7 +84,8 @@ if (!existsSync(apk)) fail(`APK not found: ${apk}`)
 
 const bytes = readFileSync(apk)
 const sha256 = createHash('sha256').update(bytes).digest('hex')
-const file = `android/BookendsMaintenance-${version}+${build}.apk`
+// Storage keys allow only letters, digits and . _ - (no "+").
+const file = `android/BookendsMaintenance-${version}-b${build}.apk`
 
 const headers = (extra = {}) => ({ Authorization: `Bearer ${key}`, apikey: key, ...extra })
 async function storage(path, init = {}) {

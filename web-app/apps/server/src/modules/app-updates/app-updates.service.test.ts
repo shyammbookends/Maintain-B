@@ -41,5 +41,8 @@ describe('manifestSchema', () => {
     expect(bad({ file: '../secret.apk' })).toBe(false)
     expect(bad({ file: 'attachments/x.apk' })).toBe(false)
     expect(bad({ sha256: 'xyz' })).toBe(false)
+    // The release script's names must pass (storage keys allow no "+").
+    expect(bad({ file: 'android/BookendsMaintenance-1.16.0-b22.apk' })).toBe(true)
+    expect(bad({ file: 'android/BookendsMaintenance-1.16.0+22.apk' })).toBe(false)
   })
 })
