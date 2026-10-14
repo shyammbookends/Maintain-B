@@ -1,0 +1,15 @@
+# CLI deploys (`vercel deploy` from web-app/): never upload secrets or local files.
+node_modules
+**/node_modules
+**/dist
+coverage
+*.tsbuildinfo
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+apps/server/storage
+playwright-report
+test-results
+*.log
