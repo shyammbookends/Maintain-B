@@ -8,7 +8,7 @@
     "bom1"
   ],
   "functions": {
-    "api/index.js": {
+    "api/index.mjs": {
       "maxDuration": 60,
       "includeFiles": "{apps/server/dist/**,packages/shared/dist/**,node_modules/.prisma/client/**,node_modules/pdfkit/js/standard-fonts/**}"
     }

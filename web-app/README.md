@@ -47,7 +47,7 @@ Open http://localhost:5173. The seed prints the Super Admin credentials; you mus
 ## Deploy on Vercel
 
 The repository deploys as **one Vercel project**: the React app as static files and the
-Express API as a serverless function (`api/index.js`). Everything is configured in
+Express API as a serverless function (`api/index.mjs`). Everything is configured in
 `vercel.json` and `scripts/vercel-build.mjs`.
 
 1. **Database:** create a PostgreSQL database (Neon, Supabase or Vercel Postgres) and copy its
