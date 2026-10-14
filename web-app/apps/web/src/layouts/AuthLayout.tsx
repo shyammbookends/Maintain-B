@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
-import { BrandMark } from './BrandMark'
+import { BrandLogo, BrandMark } from './BrandMark'
 
 /**
  * Sign-in / password screens. Desktop: brand panel on the left, form card on
@@ -33,9 +33,7 @@ export function AuthLayout({ children }: { children?: ReactNode }) {
           className="absolute -bottom-32 -left-16 size-96 rounded-full bg-white/5"
         />
         <div className="relative flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25">
-            <Wrench className="size-5" aria-hidden />
-          </span>
+          <BrandLogo className="size-10 rounded-[9px] ring-1 ring-white/30" />
           <span className="text-lg font-semibold">{t('app.name')}</span>
         </div>
         <div className="relative">
@@ -85,9 +83,7 @@ function AuthLayoutMobile({ children }: { children?: ReactNode }) {
     <div className="bg-app min-h-dvh">
       <header data-m="auth-hero" className="m-brand text-white">
         <div className="flex items-center gap-3">
-          <span className="flex size-[46px] shrink-0 items-center justify-center rounded-[13px] bg-white/[0.18]">
-            <Wrench className="size-[23px]" aria-hidden />
-          </span>
+          <BrandLogo className="size-[46px] rounded-[10px] ring-1 ring-white/30" />
           <span className="min-w-0">
             <span className="block text-[17px] font-bold">{t('app.name')}</span>
             <span className="block truncate text-[12.5px] text-white/80">{t('app.tagline')}</span>

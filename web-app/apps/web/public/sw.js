@@ -5,14 +5,14 @@
  *  - API calls are not touched here: the app's own offline layer handles them.
  *  - Web Push: shows the notification and opens the linked screen on tap.
  */
-const SHELL = 'bookends-shell-v1'
+const SHELL = 'bookends-shell-v2'
 const ASSETS = 'bookends-assets-v1'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL)
-      .then((c) => c.addAll(['/', '/manifest.webmanifest', '/favicon.svg']))
+      .then((c) => c.addAll(['/', '/manifest.webmanifest', '/favicon.ico', '/icons/icon-192.png']))
       .then(() => self.skipWaiting()),
   )
 })
@@ -74,8 +74,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/favicon.svg',
-      badge: '/favicon.svg',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/badge-96.png',
       data: { url: data.url },
     }),
   )

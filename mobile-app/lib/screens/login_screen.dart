@@ -20,12 +20,13 @@ class BrandMark extends StatelessWidget {
         Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            gradient: light ? null : AppColors.brand,
-            color: light ? Colors.white.withValues(alpha: 0.18) : null,
-            borderRadius: BorderRadius.circular(size * 0.28),
-          ),
-          child: Icon(Icons.build_rounded, color: Colors.white, size: size * 0.5),
+          decoration: light
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(size * 0.22),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                )
+              : null,
+          child: Image.asset('assets/brand/logo.png', width: size, height: size, filterQuality: FilterQuality.medium),
         ),
         const SizedBox(width: 12),
         Flexible(
