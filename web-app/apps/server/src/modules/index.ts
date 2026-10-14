@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { automationsRouter } from './automations/automations.routes.js'
 import { metersRouter } from './meters/meters.routes.js'
+import { appUpdatesRouter } from './app-updates/app-updates.routes.js'
 import { assetsRouter } from './assets/assets.routes.js'
 import { auditRouter } from './audit/audit.routes.js'
 import { authRouter } from './auth/auth.routes.js'
@@ -44,6 +45,7 @@ apiRouter.use(healthRouter)
 apiRouter.use(authRouter)
 apiRouter.use(dashboardRouter)
 apiRouter.use(meRouter)
+apiRouter.use(appUpdatesRouter)
 apiRouter.use(restaurantsRouter)
 apiRouter.use(locationsRouter)
 apiRouter.use(assetsRouter)

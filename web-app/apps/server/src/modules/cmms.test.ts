@@ -527,7 +527,8 @@ describe('work order engine', () => {
       Number((await prisma.inventory.findFirstOrThrow({ where: { partId: part.id } })).quantity),
     ).toBe(8)
     const a = (await admin.get(`/assets/${asset.id}`)).body.data as AssetDetail
-    expect(a.cost.total).toBe(priced.cost.total)
+    // The job is still running, so labour grows by a paisa between the two reads.
+    expect(a.cost.total).toBeCloseTo(priced.cost.total, 1)
     expect(a.history.map((h) => h.eventType)).toContain('PART_REPLACED')
 
     const removed = (await admin.del(`/work-orders/${w.id}/costs/${priced.costLines[0]!.id}`)).body

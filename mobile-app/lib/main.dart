@@ -11,6 +11,7 @@ import 'core/offline.dart';
 import 'core/push.dart';
 import 'core/session.dart';
 import 'core/theme.dart';
+import 'core/updater.dart';
 import 'screens/admin/admin_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/shared/misc_screens.dart';
@@ -89,8 +90,8 @@ class _Root extends StatelessWidget {
   }
 }
 
-/// After sign-in: asks for notification permission, starts phone alerts and
-/// opens the screen of a notification that launched the app.
+/// After sign-in: asks for notification permission, starts phone alerts,
+/// opens the screen of a notification that launched the app and offers app updates.
 class _AlertsSetup extends StatefulWidget {
   const _AlertsSetup({super.key, required this.child});
   final Widget child;
@@ -98,11 +99,26 @@ class _AlertsSetup extends StatefulWidget {
   State<_AlertsSetup> createState() => _AlertsSetupState();
 }
 
-class _AlertsSetupState extends State<_AlertsSetup> {
+class _AlertsSetupState extends State<_AlertsSetup> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _setup());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Back in the app (e.g. the next morning): look for a newer version again.
+    if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(checkForUpdate(context, context.read<Session>().api));
+    }
   }
 
   Future<void> _setup() async {
@@ -119,6 +135,7 @@ class _AlertsSetupState extends State<_AlertsSetup> {
     pendingNotificationUrl = pendingNotificationId = null;
     if (id != null) unawaited(s.api.post('/notifications/$id/read').catchError((_) => null));
     if (url != null && mounted) openAppLink(context, url);
+    if (mounted) await checkForUpdate(context, s.api, force: true);
   }
 
   @override

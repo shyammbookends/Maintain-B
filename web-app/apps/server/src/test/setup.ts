@@ -13,6 +13,8 @@ process.env.CORS_ORIGIN ??= 'http://localhost:5173'
 process.env.JWT_ACCESS_SECRET ??= 'test-access-secret-test-access-secret-test-access-secret'
 process.env.JWT_REFRESH_SECRET ??= 'test-refresh-secret-test-refresh-secret-test-refresh-secret'
 process.env.FILE_SIGNING_SECRET ??= 'test-file-signing-secret-test-file-signing-secret'
+// Files always go to a temp folder, never to the real bucket a local .env may point at.
+process.env.STORAGE_DRIVER = 'local'
 process.env.STORAGE_LOCAL_DIR = path.join(os.tmpdir(), `maintainx-test-storage-${process.pid}`)
 process.env.COOKIE_SECURE = 'false'
 
