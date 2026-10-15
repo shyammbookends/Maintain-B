@@ -37,7 +37,11 @@ function runWithRetry(cmd, cwd, env, attempts = 6) {
   }
 }
 
-if (process.env.DATABASE_URL) {
+if (process.env.SKIP_DB_MIGRATIONS === '1') {
+  // One-off escape hatch (e.g. the live deployment holds every session-pooler client):
+  // only when the database is known to be up to date. Remove the variable afterwards.
+  console.warn('\n⚠ SKIP_DB_MIGRATIONS=1: migrations and seed skipped.')
+} else if (process.env.DATABASE_URL) {
   runWithRetry('npx prisma migrate deploy', 'apps/server', migrateEnv)
   // Idempotent: permissions, roles, categories, and the first Super Admin
   // (only when SEED_ADMIN_PASSWORD is set).
