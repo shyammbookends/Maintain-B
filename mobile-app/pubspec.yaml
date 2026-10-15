@@ -82,6 +82,7 @@ flutter:
   # Bookends logo shown in the app (launcher icons live in android/ and ios/).
   assets:
     - assets/brand/logo.png
+    - assets/brand/logo_white.png
 
   # Inter, the web app's font, so text looks the same on every phone (ignores custom system fonts).
   fonts:

@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 
 /// App palette: indigo brand with clear status colours on a cool slate base
 /// (contrast checked for text on white and on the soft tints).
+/// The Bookends logo blue (app icon, start screens).
+const kLogoBlue = Color(0xFF1E2E96);
+
 class AppColors {
   // Brand
   static const primary = Color(0xFF4F46E5); // indigo 600

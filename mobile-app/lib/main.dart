@@ -23,15 +23,11 @@ final navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(kSystemBars);
-  // Language chosen on this phone; the signed-in user's own choice replaces it after sign-in.
-  await loadSavedLocale();
-  final api = await ApiClient.create();
-  // Saved screens and changes made without a network (sent when it returns).
-  try {
-    api.offline = await OfflineSync.open();
-  } catch (_) {
-    // Without storage the app still works online.
-  }
+  // Opened side by side so the first screen comes sooner: the language chosen on this
+  // phone (the signed-in user's own choice replaces it after sign-in), the API client,
+  // and saved screens / changes made without a network (sent when it returns).
+  final (_, api, offline) = await (loadSavedLocale(), ApiClient.create(), _openOffline()).wait;
+  api.offline = offline;
   final session = Session(api);
   onNotificationTap = (url, id) {
     // Opening an alert counts as reading it (the badge goes down).
@@ -45,6 +41,14 @@ Future<void> main() async {
   await session.restore();
   // After sign-in is restored: send what waits, and watch the connection.
   api.offline?.start();
+}
+
+Future<OfflineSync?> _openOffline() async {
+  try {
+    return await OfflineSync.open();
+  } catch (_) {
+    return null; // Without storage the app still works online.
+  }
 }
 
 class BookendsApp extends StatelessWidget {
@@ -79,15 +83,35 @@ class _Root extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<Session>();
-    if (s.restoring) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    if (s.restoring) return const _Starting();
     if (!s.signedIn) return const LoginScreen();
     if (s.user?['mustChangePassword'] == true) return const ChangePasswordScreen();
     // Keyed by user so switching accounts starts from a fresh shell.
     final key = ValueKey(s.user?['id']);
     return _AlertsSetup(key: key, child: s.isAdmin ? const AdminShell() : const WorkerShell());
   }
+}
+
+/// Shown while the saved sign-in is checked: the same logo on blue as the phone's
+/// start screen (android launch_background, iOS LaunchScreen), so there is no white flash.
+class _Starting extends StatelessWidget {
+  const _Starting();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: kLogoBlue,
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Image.asset('assets/brand/logo_white.png', width: 120, height: 120),
+            const SizedBox(height: 28),
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+            ),
+          ]),
+        ),
+      );
 }
 
 /// After sign-in: asks for notification permission, starts phone alerts,
