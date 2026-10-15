@@ -107,8 +107,26 @@ npm run push:keys -- --write-env   # also adds them to apps/server/.env (local o
 
 | Where                    | Variables                                                                          |
 | ------------------------ | ---------------------------------------------------------------------------------- |
-| Vercel (required)        | `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `FILE_SIGNING_SECRET`    |
+| Vercel (required)        | `DATABASE_URL`, `MIGRATE_DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `FILE_SIGNING_SECRET` |
 | Vercel (background jobs) | `CRON_SECRET`                                                                      |
 | Vercel (email)           | `SMTP_URL`, `MAIL_FROM`                                                            |
 | Vercel (push)            | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`                           |
 | GitHub Actions secrets   | `APP_URL`, `CRON_SECRET`                                                           |
+
+## Database connections on Vercel (Supabase)
+
+Serverless functions start many instances, and every instance keeps its own
+database connections. Supabase's **session pooler** (port 5432) allows only 15
+clients on the free plan, which the API and the phones' alert connections use up
+within minutes (`EMAXCONNSESSION`, every request fails). So:
+
+| Variable               | Value                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`         | transaction pooler: `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=2&pool_timeout=30` |
+| `MIGRATE_DATABASE_URL` | session pooler: the same address on port `5432` (no extra parameters); the build runs migrations and the seed with it |
+
+Keep `connection_limit` small (1–2): the transaction pooler allows 200 clients in
+total, shared by all instances. If a build cannot get a session connection, it
+retries for about 90 seconds; as a one-off, `SKIP_DB_MIGRATIONS=1` skips
+migrations (only when the database is known to be up to date; remove it after).
+A long-running server (Railway, a VPS) can use the session pooler for both.

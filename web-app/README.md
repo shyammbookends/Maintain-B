@@ -59,7 +59,8 @@ Express API as a serverless function (`api/index.mjs`). Everything is configured
 
    | Name                                                             | Value                                                                           |
    | ---------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-   | `DATABASE_URL`                                                   | the PostgreSQL connection string                                                |
+   | `DATABASE_URL`                                                   | Supabase **transaction pooler** (port 6543) + `?pgbouncer=true&connection_limit=2&pool_timeout=30` |
+   | `MIGRATE_DATABASE_URL`                                           | Supabase **session pooler** (port 5432), used only for migrations during the build |
    | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `FILE_SIGNING_SECRET` | three different random strings, 32+ characters                                  |
    | `CRON_SECRET`                                                    | a random string (protects the daily background job)                             |
    | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`                        | the first Super Admin (password change forced at first sign-in)                 |
