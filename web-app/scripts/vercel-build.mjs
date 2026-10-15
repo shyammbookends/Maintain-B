@@ -24,11 +24,24 @@ const migrateEnv = {
 run('npm run build -w @maintainx/shared')
 run('npx prisma generate', 'apps/server')
 
+/** The session pooler can be briefly full (the previous deployment still holds clients). */
+function runWithRetry(cmd, cwd, env, attempts = 6) {
+  for (let i = 1; ; i++) {
+    try {
+      return run(cmd, cwd, env)
+    } catch (err) {
+      if (i >= attempts) throw err
+      console.warn(`\n⚠ attempt ${i} failed, retrying in 15 s…`)
+      execSync(process.platform === 'win32' ? 'timeout /t 15 /nobreak >nul' : 'sleep 15', { shell: true })
+    }
+  }
+}
+
 if (process.env.DATABASE_URL) {
-  run('npx prisma migrate deploy', 'apps/server', migrateEnv)
+  runWithRetry('npx prisma migrate deploy', 'apps/server', migrateEnv)
   // Idempotent: permissions, roles, categories, and the first Super Admin
   // (only when SEED_ADMIN_PASSWORD is set).
-  run('npx tsx prisma/seed.ts', 'apps/server', migrateEnv)
+  runWithRetry('npx tsx prisma/seed.ts', 'apps/server', migrateEnv)
 } else {
   console.warn('\n⚠ DATABASE_URL is not set: skipping migrations and seed.')
 }
