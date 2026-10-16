@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'i18n.dart';
 import 'offline.dart';
+import 'secure_cookies.dart';
 import 'server_errors.dart';
 import 'transport_policy.dart';
 
@@ -79,10 +80,10 @@ class ApiClient {
     value?.sender = replay;
   }
 
-  /// Cookies are kept on disk so the session survives app restarts.
+  /// Cookies are kept (encrypted) so the session survives app restarts.
   static Future<ApiClient> create() async {
     final dir = await getApplicationSupportDirectory();
-    return withJar(PersistCookieJar(storage: FileStorage('${dir.path}/cookies')));
+    return withJar(PersistCookieJar(storage: SecureCookieStorage('${dir.path}/cookies')));
   }
 
   /// Same client with a given cookie jar (tests use an in-memory one).
