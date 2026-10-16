@@ -40,6 +40,13 @@ class AppColors {
   static const brand = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [brandFrom, brandTo]);
 
   /// Richer three-stop gradient for the big greeting banners.
+  /// Admin dashboard banner: Bookends blue (as on the web app).
+  static const heroBlue = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF172554), Color(0xFF1E40AF), Color(0xFF2563EB)],
+    stops: [0, 0.45, 1],
+  );
   static const hero = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,

@@ -416,14 +416,24 @@ class AppCard extends StatelessWidget {
 typedef HeroAction = ({IconData icon, String label, VoidCallback onTap});
 
 /// Gradient greeting banner (homes and dashboard): soft glowing shapes, the
-/// person's avatar and optional one-tap shortcuts.
+/// person's avatar and optional one-tap shortcuts. [blue]: Bookends blue with
+/// bubbles rising through it (the admin dashboard, like the web app).
 class BrandHero extends StatelessWidget {
-  const BrandHero({super.key, this.overline, required this.title, this.subtitle, this.person, this.actions = const []});
+  const BrandHero({
+    super.key,
+    this.overline,
+    required this.title,
+    this.subtitle,
+    this.person,
+    this.actions = const [],
+    this.blue = false,
+  });
   final String? overline;
   final String title;
   final String? subtitle;
   final dynamic person;
   final List<HeroAction> actions;
+  final bool blue;
   @override
   Widget build(BuildContext context) {
     Widget glow(double size, double alpha) => Container(
@@ -438,12 +448,34 @@ class BrandHero extends StatelessWidget {
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: AppColors.hero,
+        gradient: blue ? AppColors.heroBlue : AppColors.hero,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: AppColors.brandTo.withValues(alpha: 0.35), blurRadius: 28, offset: const Offset(0, 12))],
+        boxShadow: [
+          BoxShadow(
+            color: blue ? const Color(0x611D4ED8) : AppColors.brandTo.withValues(alpha: 0.35),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
       child: Stack(
         children: [
+          if (blue) ...[
+            // Light coming in from the top-right corner.
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topRight,
+                    radius: 1.2,
+                    colors: [Color(0x7360A5FA), Color(0x0060A5FA)],
+                    stops: [0, 0.55],
+                  ),
+                ),
+              ),
+            ),
+            const Positioned.fill(child: _RisingBubbles()),
+          ],
           Positioned(top: -60, right: -40, child: glow(170, 0.10)),
           Positioned(bottom: -70, right: 60, child: glow(130, 0.07)),
           Positioned(top: 30, left: -30, child: glow(70, 0.06)),
@@ -523,6 +555,113 @@ class BrandHero extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Bubbles rising through the blue banner (same timing as the web app's).
+/// Still when the phone asks for reduced motion.
+class _RisingBubbles extends StatefulWidget {
+  const _RisingBubbles();
+  @override
+  State<_RisingBubbles> createState() => _RisingBubblesState();
+}
+
+class _RisingBubblesState extends State<_RisingBubbles> with SingleTickerProviderStateMixin {
+  // (left as a fraction of the width, size, seconds per rise, start delay)
+  static const _bubbles = [
+    (0.06, 14.0, 9.0, 0.0),
+    (0.22, 22.0, 11.0, 2.5),
+    (0.40, 10.0, 8.0, 1.0),
+    (0.58, 26.0, 12.0, 4.0),
+    (0.74, 12.0, 9.5, 6.0),
+    (0.88, 18.0, 10.5, 3.0),
+  ];
+  late final _clock = AnimationController(vsync: this, duration: const Duration(days: 1));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final still = MediaQuery.of(context).disableAnimations;
+    if (still && _clock.isAnimating) _clock.stop();
+    if (!still && !_clock.isAnimating) _clock.repeat();
+  }
+
+  @override
+  void dispose() {
+    _clock.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final still = MediaQuery.of(context).disableAnimations;
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: CustomPaint(
+          painter: _BubblePainter(_clock, _bubbles, still),
+        ),
+      ),
+    );
+  }
+}
+
+class _BubblePainter extends CustomPainter {
+  _BubblePainter(this.clock, this.bubbles, this.still) : super(repaint: clock);
+  final AnimationController clock;
+  final List<(double, double, double, double)> bubbles;
+  final bool still;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final seconds = (clock.lastElapsedDuration ?? Duration.zero).inMicroseconds / 1e6;
+    for (final (left, d, dur, delay) in bubbles) {
+      double p; // 0 → 1 through one rise
+      if (still) {
+        p = 0.45;
+      } else {
+        final t = seconds - delay;
+        if (t < 0) continue;
+        p = (t % dur) / dur;
+      }
+      final eased = p * p; // ease-in, like the CSS
+      final opacity = still
+          ? 0.45
+          : p < 0.12
+              ? 0.9 * p / 0.12
+              : p > 0.9
+                  ? 0.5 * (1 - p) / 0.1
+                  : 0.9 - 0.4 * (p - 0.12) / 0.78;
+      final dx = p < 0.5 ? 10 * (p / 0.5) : 10 - 18 * ((p - 0.5) / 0.5);
+      final scale = p < 0.5 ? 0.7 + 0.3 * (p / 0.5) : 1 + 0.12 * ((p - 0.5) / 0.5);
+      final r = d * scale / 2;
+      final c = Offset(size.width * left + d / 2 + dx, size.height + 32 - d / 2 - eased * 300);
+      final rect = Rect.fromCircle(center: c, radius: r);
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-0.36, -0.4),
+            colors: [
+              Colors.white.withValues(alpha: 0.6 * opacity),
+              Colors.white.withValues(alpha: 0.14 * opacity),
+              Colors.white.withValues(alpha: 0.04 * opacity),
+            ],
+            stops: const [0, 0.55, 1],
+          ).createShader(rect),
+      );
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = Colors.white.withValues(alpha: 0.3 * opacity),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BubblePainter old) => old.still != still;
 }
 
 class _HeroButton extends StatelessWidget {

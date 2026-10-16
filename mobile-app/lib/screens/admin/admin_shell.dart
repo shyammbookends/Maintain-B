@@ -166,8 +166,8 @@ class DashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           children: [
             BrandHero(
-              overline: t('{restaurants} restaurants · {technicians} technicians',
-                  {'restaurants': c['activeRestaurants'] ?? 0, 'technicians': c['activeWorkers'] ?? 0}),
+              blue: true,
+              overline: s.isSuperAdmin ? t('Control centre') : t('Dashboard'),
               title: greeting(s.firstName),
               subtitle: t('Today: {created} new · {completed} completed · {critical} critical', {
                 'created': today['created'] ?? 0,

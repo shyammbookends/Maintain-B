@@ -976,4 +976,5 @@ const gu = <String, String>{
   'Could not open the installer. Please try again.': 'ઇન્સ્ટોલર ખૂલી શક્યું નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.',
   'The download was damaged. Please try again.': 'ડાઉનલોડ ખરાબ થઈ ગયું. કૃપા કરીને ફરી પ્રયાસ કરો.',
   'Could not download the update. Check the internet and try again.': 'અપડેટ ડાઉનલોડ થઈ શક્યું નહીં. ઇન્ટરનેટ તપાસો અને ફરી પ્રયાસ કરો.',
+  'Control centre': 'કંટ્રોલ સેન્ટર',
 };

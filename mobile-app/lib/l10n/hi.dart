@@ -976,4 +976,5 @@ const hi = <String, String>{
   'Could not open the installer. Please try again.': 'इंस्टॉलर नहीं खुल सका। कृपया फिर से कोशिश करें।',
   'The download was damaged. Please try again.': 'डाउनलोड ख़राब हो गया। कृपया फिर से कोशिश करें।',
   'Could not download the update. Check the internet and try again.': 'अपडेट डाउनलोड नहीं हो सका। इंटरनेट जाँचें और फिर से कोशिश करें।',
+  'Control centre': 'कंट्रोल सेंटर',
 };
