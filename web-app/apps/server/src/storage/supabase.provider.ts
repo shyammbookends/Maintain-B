@@ -9,6 +9,15 @@ import {
   type StoredObject,
 } from './storage.provider.js'
 
+/**
+ * Supabase accepts two kinds of server key: the legacy `service_role` JWT (sent as
+ * `apikey` and as a Bearer token) and the newer secret keys `sb_secret_…`, which
+ * aren't JWTs and must only go in `apikey` (a Bearer copy would be rejected).
+ */
+export function supabaseKeyHeaders(key: string): Record<string, string> {
+  return key.startsWith('sb_') ? { apikey: key } : { apikey: key, Authorization: `Bearer ${key}` }
+}
+
 export interface SupabaseStorageConfig {
   /** https://<project-ref>.supabase.co */
   url: string
@@ -29,11 +38,7 @@ export class SupabaseStorageProvider implements StorageProvider {
   }
 
   private headers(extra: Record<string, string> = {}) {
-    return {
-      Authorization: `Bearer ${this.cfg.serviceKey}`,
-      apikey: this.cfg.serviceKey,
-      ...extra,
-    }
+    return { ...supabaseKeyHeaders(this.cfg.serviceKey), ...extra }
   }
 
   private path(key: string) {
@@ -132,6 +137,9 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
 /** Supabase answers a missing bucket with 400/404 and "Bucket not found". */
 async function isBucketMissing(res: Response): Promise<boolean> {
   if (res.status !== 400 && res.status !== 404) return false
-  const text = await res.clone().text().catch(() => '')
+  const text = await res
+    .clone()
+    .text()
+    .catch(() => '')
   return /bucket not found/i.test(text)
 }

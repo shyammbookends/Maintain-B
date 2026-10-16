@@ -1,0 +1,64 @@
+name: Database backup
+
+# Weekly encrypted backup of the production database (the free Supabase plan has
+# no downloadable backups). The dump is encrypted with BACKUP_PASSPHRASE before it
+# leaves the runner and kept as a workflow artifact for 90 days.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   BACKUP_DATABASE_URL  the Supabase *session pooler* URL (port 5432), same as MIGRATE_DATABASE_URL
+#   BACKUP_PASSPHRASE    a long random passphrase; keep a copy offline — without it a backup can't be opened
+#
+# Restore (on a PC with PostgreSQL 17 tools and gpg):
+#   gpg --decrypt bookends-db-<date>.dump.gpg > bookends.dump
+#   pg_restore --clean --if-exists --no-owner -d "<database url>" bookends.dump
+
+on:
+  schedule:
+    - cron: '30 20 * * 0' # Sundays 20:30 UTC (Monday 02:00 IST)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump and encrypt
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$PASSPHRASE" ]; then
+            echo "::warning::Set BACKUP_DATABASE_URL and BACKUP_PASSPHRASE to enable backups."
+            exit 0
+          fi
+          set -o pipefail
+          name="bookends-db-$(date -u +%Y-%m-%d).dump.gpg"
+          /usr/lib/postgresql/17/bin/pg_dump --format=custom --no-owner --no-privileges \
+            --schema=public "$DATABASE_URL" \
+            | gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase-fd 3 -o "$name" 3<<<"$PASSPHRASE"
+          ls -lh "$name"
+          echo "BACKUP_FILE=$name" >> "$GITHUB_ENV"
+
+      - name: Keep for 90 days
+        if: env.BACKUP_FILE != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 90
+          if-no-files-found: error

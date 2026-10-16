@@ -107,3 +107,24 @@ They also clean up expired sessions (after 7 days) and read notifications (after
 - **Abuse limits:** guests can trigger at most 3 unmutable CRITICAL pages per restaurant per hour; at most 10 report schedules per person and 50 per organization; counter meters can't go backwards or jump absurdly for people without `meters:edit`; whoever completed a job can't verify it (Super Admin may); Users don't see costs or other people's work on asset pages.
 - **Web app headers** (`vercel.json`): strict CSP (no inline scripts), HSTS 2 years, `frame-ancestors 'none'`, `Permissions-Policy` camera/microphone for this site only.
 - **Phone app:** release builds are HTTPS-only (Android network security config, iOS ATS, and the app itself); plain http only to private LAN addresses in debug builds or builds made with `--dart-define=ALLOW_LAN_HTTP=true`. App data is excluded from Android backups.
+
+## Security pass, OWASP Top 10 (2026-10-16)
+
+- **Tests:** `src/owasp.test.ts` adds cross-restaurant IDOR (404, not 403), privilege escalation, mass
+  assignment, SQL/XSS/template payloads in search, `alg: none` / wrong-key / swapped-subject JWTs,
+  refresh-cookie flags, CORS from a foreign origin, oversized and malformed input and `/files` path
+  traversal. A live sweep of all 238 non-public routes without a session answers 401 everywhere.
+- **NUL bytes** are stripped from every validated string (`withoutNulBytes` in `core/validate.ts`), and a
+  database "invalid byte sequence" is a 400, not a 500.
+- **API responses** send `X-Frame-Options: DENY` (signed `/files` keep `SAMEORIGIN` for the PDF viewer).
+- **Supabase keys:** legacy `service_role` JWTs and the new `sb_secret_…` keys both work
+  (`supabaseKeyHeaders`); new keys are sent as `apikey` only.
+- **Rotating secrets** without pasting them anywhere: `npm run secrets:rotate` (database password,
+  Supabase secret key, CRON_SECRET) checks the new value, then updates `apps/server/.env` and Vercel and
+  redeploys. The Android signing key's password was changed; the key itself (and updates) stay the same.
+- **Backups:** `.github/workflows/db-backup.yml` dumps the database weekly, encrypts it with
+  `BACKUP_PASSPHRASE` (AES-256) and keeps it 90 days as a workflow artifact.
+- **Phone app:** the sign-in (refresh) cookie is stored encrypted — Android Keystore (AES-GCM) / iOS
+  Keychain (this device only); cookies saved by older versions move in on first use.
+- **Dependencies:** dev tooling updated (vitest 5, concurrently 10, uuid ≥ 11.1.1 for autocannon) — no
+  critical or moderate advisories left. Still accepted: `deepmerge-ts` via the Prisma CLI (build time only).

@@ -107,6 +107,20 @@ function mapError(err: unknown): Mapped {
     }
   }
 
+  // Text PostgreSQL can't store (e.g. a NUL byte that reached a query unvalidated): bad input, not a crash.
+  if (
+    (err instanceof Prisma.PrismaClientKnownRequestError ||
+      err instanceof Prisma.PrismaClientUnknownRequestError) &&
+    /invalid byte sequence|0x00/i.test(err.message)
+  ) {
+    return {
+      status: 400,
+      code: ERROR_CODES.VALIDATION_ERROR,
+      message: 'The request contains characters that are not allowed.',
+      severity: 'quiet',
+    }
+  }
+
   if (err instanceof Prisma.PrismaClientInitializationError) {
     return {
       status: 503,

@@ -35,9 +35,19 @@ async function call(url, init = {}, token) {
     },
   })
   const text = await res.text()
-  const body = text ? (() => { try { return JSON.parse(text) } catch { return text } })() : null
+  const body = text
+    ? (() => {
+        try {
+          return JSON.parse(text)
+        } catch {
+          return text
+        }
+      })()
+    : null
   if (!res.ok) {
-    const err = new Error(`${init.method ?? 'GET'} ${url} → ${res.status}: ${typeof body === 'string' ? body : JSON.stringify(body)}`)
+    const err = new Error(
+      `${init.method ?? 'GET'} ${url} → ${res.status}: ${typeof body === 'string' ? body : JSON.stringify(body)}`,
+    )
     err.status = res.status
     err.body = body
     throw err
@@ -46,7 +56,10 @@ async function call(url, init = {}, token) {
 }
 
 async function ensureBucket(url, serviceKey) {
-  const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
+  // New secret keys (sb_secret_…) go in apikey only; legacy service_role JWTs also as Bearer.
+  const headers = serviceKey.startsWith('sb_')
+    ? { apikey: serviceKey }
+    : { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
   const buckets = await call(`${url}/storage/v1/bucket`, { headers })
   if (buckets.some((b) => b.id === BUCKET)) {
     console.log(`✔ Bucket "${BUCKET}" already exists`)
@@ -126,7 +139,9 @@ async function fromAccessToken(token) {
   console.log(`SUPABASE_BUCKET=${BUCKET}`)
   console.log(`DATABASE_URL=${databaseUrl}`)
   if (!dbPassword)
-    console.log('\n(Replace [YOUR-PASSWORD] with the database password from the Supabase dashboard.)')
+    console.log(
+      '\n(Replace [YOUR-PASSWORD] with the database password from the Supabase dashboard.)',
+    )
   console.log('\nThen run the migrations against it:  npm run db:deploy')
   console.log('Keep the service_role key secret, and delete the access token now.')
 }

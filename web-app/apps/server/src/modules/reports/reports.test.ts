@@ -241,7 +241,7 @@ describe('security headers', () => {
     )
     expect(res.headers['cache-control']).toBe('no-store')
     expect(res.headers['x-content-type-options']).toBe('nosniff')
-    expect(res.headers['x-frame-options']).toBe('SAMEORIGIN')
+    expect(res.headers['x-frame-options']).toBe('DENY')
     expect(res.headers['x-powered-by']).toBeUndefined()
     expect(res.headers['strict-transport-security']).toBeDefined()
   })

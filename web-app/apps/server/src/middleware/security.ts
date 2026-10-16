@@ -23,7 +23,7 @@ const apiCsp = helmet.contentSecurityPolicy({
 })
 
 /**
- * helmet defaults everywhere; a deny-all CSP and no-store caching on API
+ * helmet defaults everywhere; a deny-all CSP, no framing and no-store caching on API
  * responses. Signed file downloads (/files) set their own headers so PDFs and
  * photos still open inline in the browser.
  */
@@ -32,6 +32,8 @@ export const securityHeaders: RequestHandler = (req, res, next) => {
     if (err) return next(err)
     if (req.path.startsWith('/api/v1/files')) return next()
     res.setHeader('Cache-Control', 'no-store')
+    // JSON is never framed (signed PDFs above keep SAMEORIGIN for the in-app viewer).
+    res.setHeader('X-Frame-Options', 'DENY')
     apiCsp(req, res, next)
   })
 }

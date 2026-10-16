@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { SupabaseStorageProvider } from './supabase.provider.js'
+import { SupabaseStorageProvider, supabaseKeyHeaders } from './supabase.provider.js'
 
 /* The Supabase driver speaks the Storage REST API; checked against a fake server. */
 
-const cfg = { url: 'https://abc.supabase.co', serviceKey: 'service-role-key-1234567890', bucket: 'files' }
+const cfg = {
+  url: 'https://abc.supabase.co',
+  serviceKey: 'service-role-key-1234567890',
+  bucket: 'files',
+}
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -18,6 +22,16 @@ function fakeFetch(handler: (url: string, init: RequestInit) => Response) {
   )
   return calls
 }
+
+describe('supabaseKeyHeaders', () => {
+  it('sends legacy service_role JWTs as apikey + Bearer, new secret keys only as apikey', () => {
+    expect(supabaseKeyHeaders('eyJhbGciOi.payload.sig')).toEqual({
+      apikey: 'eyJhbGciOi.payload.sig',
+      Authorization: 'Bearer eyJhbGciOi.payload.sig',
+    })
+    expect(supabaseKeyHeaders('sb_secret_abc123')).toEqual({ apikey: 'sb_secret_abc123' })
+  })
+})
 
 describe('SupabaseStorageProvider', () => {
   it('uploads with upsert, signs links and deletes by prefix', async () => {
@@ -59,7 +73,9 @@ describe('SupabaseStorageProvider', () => {
     fakeFetch(() => new Response('not found', { status: 400 }))
     const s = new SupabaseStorageProvider(cfg)
     expect(await s.exists('a/missing.webp')).toBe(false)
-    await expect(s.put('../etc/passwd', Buffer.from('x'), { mimeType: 'text/plain' })).rejects.toThrow()
+    await expect(
+      s.put('../etc/passwd', Buffer.from('x'), { mimeType: 'text/plain' }),
+    ).rejects.toThrow()
   })
 })
 
@@ -79,7 +95,11 @@ describe('SupabaseStorageProvider bucket', () => {
       mimeType: 'image/webp',
     })
     const bucket = calls.find((c) => c.url.endsWith('/bucket'))!
-    expect(JSON.parse(String(bucket.init.body))).toEqual({ id: 'files', name: 'files', public: false })
+    expect(JSON.parse(String(bucket.init.body))).toEqual({
+      id: 'files',
+      name: 'files',
+      public: false,
+    })
     expect(calls).toHaveLength(3)
   })
 })
